@@ -281,3 +281,106 @@ def calculate_metrics(golds: List[int], predictions: List[int], print_only: bool
 
     if not print_only:
         return acc, prec, rec, f1
+
+# Specify the data paths
+train_path = "data/train.txt"
+dev_path = "data/dev.txt"
+blind_test_path = "data/test-blind.txt" # blind test
+
+# Load train, dev, and test exs and index the words.
+train_exs = read_sentiment_examples(train_path)
+dev_exs = read_sentiment_examples(dev_path)
+test_exs_words_only = read_blind_sst_examples(blind_test_path)
+print(repr(len(train_exs)) + " / " + repr(len(dev_exs)) + " / " + repr(len(test_exs_words_only)) + " train/dev/test examples")
+
+
+word_counter = Counter()
+for words in train_exs:
+    word_counter.update(words.words)
+vocab = [word for word, count in word_counter.items() if count > 2]
+assert isinstance(vocab, list)
+
+# Now add the special tokens PAD and UNK
+vocab = ["PAD", "UNK"] + vocab
+PAD_IDX = 0
+UNK_IDX = 1
+# Show the vocabulary size:
+print("Number of words in the vocabulary:", len(vocab))
+
+indexing_sentiment_examples(train_exs, vocabulary=vocab, UNK_idx=UNK_IDX)
+indexing_sentiment_examples(dev_exs, vocabulary=vocab, UNK_idx=UNK_IDX)
+indexing_sentiment_examples(test_exs_words_only, vocabulary=vocab, UNK_idx=UNK_IDX)
+
+
+model = FeedForwardNeuralNetClassifier(vocab_size=len(vocab), emb_dim=300, n_hidden_units=300)
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+model = model.to(device)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+BATCH_SIZE=32
+N_EPOCHS=20
+
+# create a batch iterator for the training data
+batch_iterator = SentimentBatchIterator(
+    train_exs, batch_size=BATCH_SIZE, PAD_idx=PAD_IDX, shuffle=True)
+
+# training
+best_epoch = -1
+best_acc = -1
+start_time = time.time()
+for epoch in range(N_EPOCHS):
+    print("Epoch %i" % epoch)
+
+    batch_iterator.refresh() # initiate a new iterator for this epoch
+
+    model.train() # turn on the "training mode"
+    batch_loss = 0.0
+    batch_example_count = 0
+    batch_data = batch_iterator.get_next_batch()
+    while batch_data is not None:
+        batch_inputs, batch_lengths, batch_labels = batch_data
+        # project to the device
+        batch_inputs = batch_inputs.to(device)
+        batch_lengths = batch_lengths.to(device)
+        batch_labels = batch_labels.to(device)
+        
+        # TODO: clean up the gradients for this batch
+        model.zero_grad()
+
+        # TODO: call the model and get the loss
+        logits = model(batch_inputs, batch_lengths)
+        loss = model.loss(logits, batch_labels.float())
+        
+
+        # record the loss and number of examples, so we could report some stats
+        batch_example_count += len(batch_labels)
+        batch_loss += loss.item() * len(batch_labels)
+
+        # TODO: backpropagation using `loss`
+        loss.backward()
+        optimizer.step()
+        
+
+        # get another batch
+        batch_data = batch_iterator.get_next_batch()
+
+    print("Avg loss: %.5f" % (batch_loss / batch_example_count))
+
+    # evaluate on dev set
+    model.eval() # turn on the "evaluation mode"
+    acc, _, _, _ = evaluate(model, dev_exs, return_metrics=True)
+    if acc > best_acc:
+        best_acc = acc
+        best_epoch = epoch
+        print("Secure a new best accuracy %.3f in epoch %d!" % (best_acc, best_epoch))
+        
+        # Save the current best model parameters
+        print("Save the best model checkpoint as `best_model.ckpt`!")
+        torch.save(model.state_dict(), "best_model.ckpt")
+    
+    print("Time elapsed: %s" % time.strftime("%Hh%Mm%Ss", time.gmtime(time.time()-start_time)))
+    print("-" * 10)
+
+print("End of training! The best accuracy %.3f was obtained in epoch %d." % (best_acc, best_epoch))
+# Load back the best checkpoint on dev set
+model.load_state_dict(torch.load("best_model.ckpt"))
