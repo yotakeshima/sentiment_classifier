@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import List
 from src.data_loader import SentimentExample
+import torch
 
 # Builds a vocab based on the min_freq
 def build_vocab(examples: List[SentimentExample], min_freq: int = 2) -> List[str]:
@@ -20,3 +21,16 @@ def read_sentiment_examples(filepath: str) -> List[SentimentExample]:
                 sent = sent.lower().split()
                 examples.append(SentimentExample(sent, label))
     return examples
+
+def make_predictions(model, input_tensor, device='cpu'):
+    model.eval()
+    model.to(device)
+
+    with torch.no_grad():
+        input_tensor = input_tensor.to(device)
+        logits = model(input_tensor)
+        predictions = torch.sigmoid(logits)
+        preds = (predictions >= 0.5).int()
+
+    return preds.cpu().numpy.tolist()
+
