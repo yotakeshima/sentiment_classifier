@@ -10,27 +10,21 @@ def build_vocab(examples: List[SentimentExample], min_freq: int = 2) -> List[str
     return vocab
 
 # Reads a sentiment file and creates SentimentExample objects to load to DataLoader
-def read_sentiment_examples(filepath: str) -> List[SentimentExample]:
+def read_sentiment_examples(filepath: str, labeled: bool = True) -> List[SentimentExample]:
     examples = []
     with open(filepath) as f:
         for line in f:
             line = line.strip()
             if line:
-                label, sent = line.split("\t")
-                label = int(label)
+                if labeled:
+                    label, sent = line.split("\t")
+                    label = int(label)
+                else:
+                    sent = line
+                    label = None
                 sent = sent.lower().split()
                 examples.append(SentimentExample(sent, label))
     return examples
 
-def make_predictions(model, input_tensor, device='cpu'):
-    model.eval()
-    model.to(device)
 
-    with torch.no_grad():
-        input_tensor = input_tensor.to(device)
-        logits = model(input_tensor)
-        predictions = torch.sigmoid(logits)
-        preds = (predictions >= 0.5).int()
-
-    return preds.cpu().numpy.tolist()
 
