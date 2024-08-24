@@ -1,8 +1,9 @@
 
 import torch
+import os
 from src.model import FeedForwardNeuralNetClassifier
 from src.data_loader import SentimentDataset, DataLoader, pad_collate_fn
-from src.utils import  read_sentiment_examples, build_vocab
+from src.utils import  read_sentiment_examples, build_vocab, output_predictions
 from src.predict import make_predictions
 
 test_examples = read_sentiment_examples('data/test-blind.txt', False)
@@ -25,4 +26,8 @@ all_predictions = []
 
 predictions = make_predictions(model, test_loader, device=device)
 
-print(predictions)
+with open('data/test-blind.txt', 'r') as file:
+    sentences = [line.strip() for line in file]
+labeled_predictions = [(label, sentence) for label, sentence in zip(predictions, sentences)]
+
+output_predictions('predictions', 'output.txt', labeled_predictions)

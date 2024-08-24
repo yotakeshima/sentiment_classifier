@@ -53,7 +53,7 @@ def pad_collate_fn(batch):
     batch_inputs, batch_lengths = zip(*[(b[0], b[1]) for b in batch])
     max_length = max(batch_lengths)
     padded_inputs = [inputs + [0] * (max_length - len(inputs)) for inputs in batch_inputs]
-    if len(batch[0] == 3):
+    if len(batch[0]) == 3:
         batch_labels = [b[2] for b in batch]
         return torch.tensor(padded_inputs), torch.tensor(batch_lengths), torch.tensor(batch_labels)
     else: 

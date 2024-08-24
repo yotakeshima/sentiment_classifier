@@ -10,7 +10,7 @@ def predict(model, input_tensor, device='cpu'):
         predictions = torch.sigmoid(logits)
         preds = (predictions >= 0.5).int()
 
-    return preds.cpu().numpy.tolist()
+    return preds.cpu().numpy().tolist()
 
 def make_predictions(model, test_loader, device='cpu'):
 
@@ -19,7 +19,7 @@ def make_predictions(model, test_loader, device='cpu'):
     for batch_inputs, batch_lengths, _ in test_loader:
         batch_inputs = batch_inputs.to(device)
         batch_predictions = predict(model, batch_inputs, device=device)
-        all_predictions.exted(batch_predictions)
+        all_predictions.extend(batch_predictions)
 
 
     return all_predictions
