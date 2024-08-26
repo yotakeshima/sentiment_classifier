@@ -27,6 +27,10 @@ def read_sentiment_examples(filepath: str, labeled: bool = True) -> List[Sentime
                 examples.append(SentimentExample(sent, label))
     return examples
 
+def read_sentiment_sentence(sentence: str):
+    return SentimentExample(([sentence], None))
+    
+
 
 def output_predictions(folder_path: str, file_name: str, labeled_predictions: List[Tuple[int, str]]) -> None:
     file_path = os.path.join(folder_path, file_name)
