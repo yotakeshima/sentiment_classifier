@@ -2,6 +2,7 @@ from collections import Counter
 from typing import List
 from src.data_loader import SentimentExample
 import os
+import torch
 from typing import List, Tuple
 
 # Builds a vocab based on the min_freq
@@ -27,8 +28,17 @@ def read_sentiment_examples(filepath: str, labeled: bool = True) -> List[Sentime
                 examples.append(SentimentExample(sent, label))
     return examples
 
-def read_sentiment_sentence(sentence: str):
-    return SentimentExample(([sentence], None))
+def pre_process(sentence: str, vocab: List[str], PAD_IDX: int, UNK_IDX: int, max_length=20) -> List[List[int]]:
+    tokens = sentence.lower().split()
+    indicies = [vocab.index(word) if word in vocab else UNK_IDX for word in tokens]
+    if len(indicies) < max_length:
+        indicies += [PAD_IDX] * (max_length - len(indicies))
+    elif len(indicies) > max_length:
+        indicies = indicies[:max_length]
+    return [indicies]
+
+
+
     
 
 
