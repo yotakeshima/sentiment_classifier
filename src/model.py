@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from transformers import BertTokenizer, BertModel
 from typing import List
 
 class FeedForwardNeuralNetClassifier(nn.Module):
@@ -25,3 +26,18 @@ class FeedForwardNeuralNetClassifier(nn.Module):
         logits = self.forward(inputs)
         probabilities = self.sigmoid(logits)
         return (probabilities >= 0.5).int().tolist()
+
+class BertFFNNC(nn.Module):
+    def __init__(self, bert_model_name: str ='bert-base-uncased', n_hidden_units: int=768, n_classess: int=1):
+        super(BertFFNNC, self).__init__()
+        self.bert = BertModel.from_pretrained(bert_model_name)
+        self.fc = nn.Linear(n_hidden_units, n_classess)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, input_ids, attention_mask):
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+
+        cls_output = outputs.last_hidden_state[:, 0, :]
+
+        logits = self.fc(cls_output)
+        return logits

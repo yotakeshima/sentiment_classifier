@@ -1,7 +1,7 @@
 import torch
 import os
 from src.model import FeedForwardNeuralNetClassifier
-from src.utils import  read_sentiment_examples, build_vocab, pre_process
+from src.utils import  read_sentiment_examples, build_vocab, preprocess_sentence_FFNN
 
 
 train_examples = read_sentiment_examples('data/train.txt')
@@ -21,7 +21,7 @@ while True:
     if sentence.lower() == 'quit':
         break
         
-    processed_test = pre_process(sentence, vocab, PAD_IDX, UNK_IDX)
+    processed_test = preprocess_sentence_FFNN(sentence, vocab, PAD_IDX, UNK_IDX)
     test_loader = torch.tensor(processed_test, device=device)
     with torch.no_grad():
         logits = model(test_loader)

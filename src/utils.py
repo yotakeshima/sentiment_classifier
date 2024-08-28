@@ -28,7 +28,7 @@ def read_sentiment_examples(filepath: str, labeled: bool = True) -> List[Sentime
                 examples.append(SentimentExample(sent, label))
     return examples
 
-def pre_process(sentence: str, vocab: List[str], PAD_IDX: int, UNK_IDX: int, max_length=20) -> List[List[int]]:
+def preprocess_sentence_FFNN(sentence: str, vocab: List[str], PAD_IDX: int, UNK_IDX: int, max_length=20) -> List[List[int]]:
     tokens = sentence.lower().split()
     indicies = [vocab.index(word) if word in vocab else UNK_IDX for word in tokens]
     if len(indicies) < max_length:
@@ -37,9 +37,15 @@ def pre_process(sentence: str, vocab: List[str], PAD_IDX: int, UNK_IDX: int, max
         indicies = indicies[:max_length]
     return [indicies]
 
-
-
-    
+def preprocess_sentence_BERT(sentence: str, tokenizer, max_length: int=128):
+    encoded_input = tokenizer(
+        sentence,
+        max_length=max_length,
+        truncation=True,
+        padding='max_length',
+        return_tensors='pt'
+    )
+    return encoded_input
 
 
 def output_predictions(folder_path: str, file_name: str, labeled_predictions: List[Tuple[int, str]]) -> None:
