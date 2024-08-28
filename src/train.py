@@ -4,6 +4,9 @@ from torch.utils.data import DataLoader
 from src.evaluate import evaluate_model
 from src.model import FeedForwardNeuralNetClassifier
 from src.data_loader import pad_collate_fn
+from sklearn.model_selection import KFold
+import numpy as np
+
 
 def train_model(model, train_loader, val_loader, optimizer, n_epochs=20, device='cpu'):
     best_acc = 0
@@ -34,3 +37,50 @@ def train_model(model, train_loader, val_loader, optimizer, n_epochs=20, device=
             print(f"New best model saved with accuracy: {best_acc:.3f}")
 
     print(f"Training complete. Best accuracy: {best_acc:.3f} at epoch {best_epoch}.")
+
+def cross_validate_model(model, dataset, n_splits=10, device='cpu'):
+    kfold = KFold(n_splits=n_splits, shuffle=True)
+    results = []
+
+    for train_idx, val_idx in kfold.split(dataset):
+        train_subset = torch.utils.data.Subset(dataset, train_idx)
+        val_subset = torch.utils.data.Subset(dataset, val_idx)
+
+        train_loader = DataLoader(train_subset, batch_size=32, shuffle=True, collate_fn=pad_collate_fn)
+        val_loader = DataLoader(val_subset, batch_size=32, shuffle=False, collate_fn=pad_collate_fn)
+
+        model.train()
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        
+        for epoch in range(10):
+            epoch_loss = 0
+            for inputs, lengths, labels in train_loader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                optimizer.zero_grad()
+                logits = model(inputs)
+                loss = model.loss_fn(logits, labels.float())
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+            print(f"Epoch {epoch+1}/{10}, Loss: {epoch_loss/len(train_loader):.4f}")
+            
+        model.eval()
+        val_loss = 0.0
+        correct_predictions = 0
+        total_predictions = 0
+        with torch.no_grad():
+            for inputs, lengths, labels in val_loader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                logits = model(inputs)
+                predictions = (torch.sigmoid(logits) > 0.5).float()
+                correct_predictions += (predictions == labels).sum().item()
+                total_predictions += labels.size(0)
+                val_loss += model.loss_fn(logits, labels.float()).item()
+        accuracy = correct_predictions/total_predictions
+        results.append(accuracy)
+        print(f"Fold Accuracy: {accuracy:.4f}")
+
+    print(f"Cross-Validation Accuracy: {np.mean(results):.4f}")
+    return results
+
+

@@ -1,15 +1,18 @@
 from collections import Counter
 from typing import List
-from src.data_loader import SentimentExample
+import torch.utils
+from src.data_loader import SentimentExample, DataLoader, pad_collate_fn
 import os
 import torch
 from typing import List, Tuple
+
 
 # Builds a vocab based on the min_freq
 def build_vocab(examples: List[SentimentExample], min_freq: int = 2) -> List[str]:
     word_counter = Counter(word for ex in examples for word in ex.words)
     vocab = ["PAD", "UNK"] + [word for word, count in word_counter.items() if count >= min_freq]
     return vocab
+
 
 # Reads a sentiment file and creates SentimentExample objects to load to DataLoader
 def read_sentiment_examples(filepath: str, labeled: bool = True) -> List[SentimentExample]:
@@ -56,4 +59,3 @@ def output_predictions(folder_path: str, file_name: str, labeled_predictions: Li
     with open(file_path, 'w') as file:
         for label, sentence in labeled_predictions:
             file.write(f"{label}\t{sentence}\n")
-
