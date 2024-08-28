@@ -59,3 +59,14 @@ def output_predictions(folder_path: str, file_name: str, labeled_predictions: Li
     with open(file_path, 'w') as file:
         for label, sentence in labeled_predictions:
             file.write(f"{label}\t{sentence}\n")
+
+def extract_labels(filepath: str):
+    labels = []
+    with open(filepath) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                label, _ = line.split("\t")
+                label = int(label)
+            labels.append(label)
+    return labels

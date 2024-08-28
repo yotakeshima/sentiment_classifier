@@ -16,4 +16,5 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dataset = SentimentDataset(train_examples, vocab, PAD_IDX, UNK_IDX)
 
+print("Cross Validating the model:")
 cross_validate_model(model, dataset, n_splits=10, device=device)
