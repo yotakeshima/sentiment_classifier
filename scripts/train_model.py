@@ -26,3 +26,5 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     train_model(model, train_loader, val_loader, optimizer, n_epochs=20, device=device)
+
+    
