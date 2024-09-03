@@ -3,7 +3,7 @@ import os
 from torch.utils.data import DataLoader
 from src.evaluate import evaluate_model
 from src.model import FeedForwardNeuralNetClassifier
-from src.data_loader import pad_collate_fn
+from src.data_loader import BertDataset, pad_collate_fn
 from sklearn.model_selection import KFold
 import numpy as np
 
@@ -71,5 +71,4 @@ def cross_validate_model(model, dataset, n_splits=10, device='cpu'):
 
     print(f"Cross-Validation Accuracy: {np.mean(results):.4f}")
     return results
-
 

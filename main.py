@@ -8,8 +8,10 @@ def run_single_input():
     os.system("python -m scripts.single_input")
 def run_cross_validate():
     os.system("python -m scripts.cross_validate")
-def run_bert_model():
-    os.system("python -m scripts.bert_model")
+def train_bert_model():
+    os.system("python -m scripts.train_bert_model")
+def run_test_bert_model():
+    os.system("python -m scripts.test_bert_model")
 
 def display_menu():
     print("\nChoose and option:")
@@ -17,7 +19,8 @@ def display_menu():
     print("2. Test the model")
     print("3. Test a single sentence")
     print("4. Cross Validate the model")
-    print("5. Test a BERT model on the dataset")
+    print("5. Train a Bert model on the dataset")
+    print("6. Test the Bert model")
 
 
 def main():
@@ -34,7 +37,9 @@ def main():
         elif choice == '4':
             run_cross_validate()
         elif choice == '5':
-            run_bert_model()
+            train_bert_model()
+        elif choice == '6':
+            run_test_bert_model()
         elif choice.lower() == 'q':
             print("Exiting the program.")
             break

@@ -45,6 +45,36 @@ class SentimentDataset(Dataset):
     def indexing_sentiment_examples(self):
         for ex in self.examples:
             ex.word_indices = [self.vocab.index(word) if word in self.vocab else self.UNK_idx for word in ex.words]
+            
+class BertDataset(Dataset):
+
+    def __init__(self, df, tokenizer, max_len):
+        self.df = df
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+    
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, index):
+        sentence = self.df.iloc[index]['sentence']
+        label = self.df.iloc[index]['label']
+        encoding = self.tokenizer.encode_plus(
+            sentence,
+            max_length=self.max_len,
+            truncation=True,
+            add_special_tokens=True,
+            return_token_type_ids=False,
+            padding='max_length',
+            return_attention_mask=True,
+            return_tensors='pt',
+        )
+        return{
+            'sentence': sentence,
+            'input_ids': encoding['input_ids'].flatten(),
+            'attention_mask': encoding['attention_mask'].flatten(),
+            'label': torch.tensor(label, dtype=torch.long)
+        }
 
 def pad_collate_fn(batch):
     """

@@ -5,6 +5,7 @@ from src.data_loader import SentimentExample, DataLoader, pad_collate_fn
 import os
 import torch
 from typing import List, Tuple
+import pandas as pd
 
 
 # Builds a vocab based on the min_freq
@@ -70,3 +71,16 @@ def extract_labels(filepath: str):
                 label = int(label)
             labels.append(label)
     return labels
+
+def create_dataframe(file_path: str):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    
+    data = []
+    for line in lines:
+        label, sentence = line.split("\t")
+        data.append((label.strip(), sentence.strip()))
+
+    df = pd.DataFrame(data, columns=['label', 'sentence'])
+    df['label'] = pd.to_numeric(df['label'])
+    return df
